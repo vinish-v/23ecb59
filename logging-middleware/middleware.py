@@ -22,7 +22,7 @@ def Log(stack: str, level: str, package: str, message: str):
     try:
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code in [200, 201]:
-            print(f"Log sent successfully to test server: {truncated_msg}")
+            print(f"Log sent : {truncated_msg}")
         else:
             print(f"Remote Log Error ({response.status_code}): {response.text}")
     except Exception as err:
