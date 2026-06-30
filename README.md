@@ -66,10 +66,21 @@ Query the optimization endpoint with a POST request:
 > [!NOTE]
 > **Troubleshooting missing depots**: The remote evaluation server API randomizes the active depot list on each query. If the server throws a `"Depot with ID X is not configured"` error, this is expected behavior from the test API. Simply **re-run/send the request again** in Postman, and the scheduler will calculate the output once the server includes that depot ID on the next query.
 
+#### API Verification Output
+The following screenshots display the request body, response JSON structure, status `200 OK`, and response time in Postman:
+
+![Postman Request & Response Top](docs/postman_schedule_top.png)
+![Postman Response Bottom](docs/postman_schedule_bottom.png)
+
 ### Priority Inbox Script
 To run the Priority Inbox script:
 ```bash
 cd notification-app-be
 python priority_inbox.py
 ```
+
+#### Terminal Verification Output
+The following screenshot displays the console output representing the top 10 prioritized campus notifications:
+
+![Terminal Priority Inbox Output](docs/terminal_priority_inbox.png)
 This downloads all active campus notifications and prints the top 10 prioritized items based on weight and recency.
