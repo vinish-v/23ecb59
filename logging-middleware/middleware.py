@@ -26,4 +26,4 @@ def Log(stack: str, level: str, package: str, message: str):
         else:
             print(f"Remote Log Error ({response.status_code}): {response.text}")
     except Exception as err:
-        print(f"Exception trying to reach logging server: {err}")
+        print(f"Exception in logging to server: {err}")

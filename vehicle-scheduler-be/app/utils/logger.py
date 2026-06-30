@@ -1,7 +1,7 @@
 try:
-    from logging_middleware import Log as send_remote_log
+    # pyrefly: ignore [missing-import]
+    from logging_middleware import Log as send_remote_log  
 except ImportError:
-    # Local fallback logger helper in case system installation is pending
     def send_remote_log(stack, level, package, message):
         pass
 

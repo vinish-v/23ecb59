@@ -8,10 +8,7 @@ router = APIRouter(prefix="/schedule", tags=["Scheduling Controller"])
 
 @router.post("", response_model=ScheduleResponse, status_code=status.HTTP_200_OK)
 def run_scheduler(request: ScheduleRequest):
-    """
-    POST route triggering scheduling calculation for the given depot ID.
-    Fetches details dynamically from the target API server.
-    """
+
     start_time = time.time()
     log_info("controller", f"Received scheduling command for depot: {request.depotId}")
     
@@ -38,7 +35,7 @@ def run_scheduler(request: ScheduleRequest):
         )
         
         elapsed = (time.time() - start_time) * 1000
-        log_info("controller", f"Successfully completed schedule compilation. Duration: {elapsed:.1f}ms")
+        log_info("controller", f"Succes Duration: {elapsed:.1f}ms")
         return response
         
     except Exception as ex:
