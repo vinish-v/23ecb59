@@ -12,7 +12,7 @@
 ### API Endpoints and Schema Contracts
 
 #### 1. Fetch User Notifications
-* **Endpoint**: `GET /api/v1/notifications`
+* **Endpoint**: 
 * **Headers**:
   ```http
   Authorization: Bearer <JWT_TOKEN>
@@ -232,7 +232,7 @@ We introduce an **Asynchronous Message Queue** (e.g. RabbitMQ, SQS, or Celery).
 
 ### Redesigned Resilient Pseudocode
 ```python
-# Event Producer (FastAPI Endpoint)
+
 def notify_all_endpoint(student_ids, message):
     # Enqueue a single bulk event job and return immediately to UI
     message_broker.publish("broadcast_notification_job", {
@@ -241,12 +241,12 @@ def notify_all_endpoint(student_ids, message):
     })
     return {"status": "Processing broadcast request."}
 
-# Background Worker Consumer
+
 def process_broadcast_notification_job(payload):
     student_ids = payload["student_ids"]
     message = payload["message"]
     
-    # Process in batches of 1000 to prevent system memory overload
+
     for batch in chunk_list(student_ids, 1000):
         # Enqueue individual worker sub-tasks to process concurrently
         for student_id in batch:
