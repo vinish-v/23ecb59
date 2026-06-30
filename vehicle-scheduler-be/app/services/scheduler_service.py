@@ -1,0 +1,101 @@
+import requests
+from typing import List, Dict, Any, Tuple
+from app.config import DEPOTS_API_URL, VEHICLES_API_URL, ACCESS_TOKEN
+from app.utils.logger import log_info, log_error, log_warn
+
+class SchedulerService:
+
+    @staticmethod
+    def get_headers() -> Dict[str, str]:
+        return {
+            "Authorization": f"Bearer {ACCESS_TOKEN}",
+            "Content-Type": "application/json"
+        }
+
+    @classmethod
+    def get_depot_budget(cls, depot_id: int) -> int:
+        """
+        Queries test API server to determine the mechanic-hour limit for a given depot.
+        """
+        log_info("service", f"Querying budget constraint for depot {depot_id}")
+        headers = cls.get_headers()
+        try:
+            response = requests.get(DEPOTS_API_URL, headers=headers)
+            if response.status_code != 200:
+                log_error("service", f"Failed fetching depot limits. HTTP {response.status_code}")
+                raise Exception("Unable to fetch data from test server API.")
+                
+            payload = response.json()
+            depots = payload.get("depots", [])
+            for depot in depots:
+                if depot.get("ID") == depot_id:
+                    limit = depot.get("MechanicHours")
+                    log_info("service", f"Depot {depot_id} limit resolved: {limit} hours.")
+                    return limit
+            
+            log_warn("service", f"Depot ID {depot_id} is missing in response list.")
+            raise Exception(f"Depot with ID {depot_id} is not configured on the remote server.")
+        except Exception as e:
+            log_error("service", f"Error resolving depot budget: {e}")
+            raise
+
+    @classmethod
+    def get_vehicles(cls) -> List[Dict[str, Any]]:
+        """
+        Queries vehicles list needing operations maintenance.
+        """
+        log_info("service", "Retrieving vehicles maintenance requests dataset.")
+        headers = cls.get_headers()
+        try:
+            response = requests.get(VEHICLES_API_URL, headers=headers)
+            if response.status_code != 200:
+                log_error("service", f"Failed fetching vehicles list. HTTP {response.status_code}")
+                raise Exception("Unable to retrieve vehicles list from test server API.")
+                
+            payload = response.json()
+            vehicles = payload.get("vehicles", [])
+            log_info("service", f"Loaded {len(vehicles)} vehicle entries.")
+            return vehicles
+        except Exception as e:
+            log_error("service", f"Error retrieving vehicles dataset: {e}")
+            raise
+
+    @staticmethod
+    def optimize_schedule(vehicles: List[Dict[str, Any]], budget: int) -> Tuple[List[Dict[str, Any]], int, int]:
+        """
+        0/1 Knapsack optimization algorithm to maximize cumulative impact
+        without exceeding mechanic hour budget constraints.
+        Complexity: O(N * Budget)
+        """
+        n = len(vehicles)
+        if n == 0 or budget <= 0:
+            return [], 0, 0
+            
+        # dp[i][w] represents maximum impact with first i items and weight limit w
+        dp = [[0] * (budget + 1) for _ in range(n + 1)]
+        
+        for i in range(1, n + 1):
+            cost = vehicles[i - 1]["Duration"]
+            value = vehicles[i - 1]["Impact"]
+            for w in range(budget + 1):
+                if cost <= w:
+                    dp[i][w] = max(dp[i - 1][w], dp[i - 1][w - cost] + value)
+                else:
+                    dp[i][w] = dp[i - 1][w]
+                    
+        # Trace back path to find the included vehicles
+        selected_tasks = []
+        w = budget
+        duration_total = 0
+        for i in range(n, 0, -1):
+            if dp[i][w] != dp[i - 1][w]:
+                vehicle = vehicles[i - 1]
+                selected_tasks.append(vehicle)
+                duration_total += vehicle["Duration"]
+                w -= vehicle["Duration"]
+                
+        # Revert back to historical API order list
+        selected_tasks.reverse()
+        total_impact = dp[n][budget]
+        
+        return selected_tasks, duration_total, total_impact
