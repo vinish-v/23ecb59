@@ -63,6 +63,9 @@ Query the optimization endpoint with a POST request:
     }
     ```
 
+> [!NOTE]
+> **Troubleshooting missing depots**: The remote evaluation server API randomizes the active depot list on each query. If the server throws a `"Depot with ID X is not configured"` error, this is expected behavior from the test API. Simply **re-run/send the request again** in Postman, and the scheduler will calculate the output once the server includes that depot ID on the next query.
+
 ### Priority Inbox Script
 To run the Priority Inbox script:
 ```bash
