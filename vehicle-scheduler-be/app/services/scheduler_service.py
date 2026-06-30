@@ -63,38 +63,59 @@ class SchedulerService:
     @staticmethod
     def optimize_schedule(vehicles: List[Dict[str, Any]], budget: int) -> Tuple[List[Dict[str, Any]], int, int]:
         """
-        0/1 Knapsack optimization algorithm to maximize cumulative impact
-        without exceeding mechanic hour budget constraints.
-        Complexity: O(N * Budget)
+        Solves the 0/1 Knapsack problem to find the optimal combination of vehicle maintenance
+        tasks that maximizes the total operational impact score without exceeding the daily mechanic-hour budget.
+
+        Parameters:
+            vehicles (List[Dict]): List of dictionary items representing vehicles (with TaskID, Duration, Impact).
+            budget (int): Daily limit of mechanic-hours (knapsack capacity).
+
+        Returns:
+            Tuple: (selected_vehicles_list, total_duration_spent, total_impact_score)
         """
         n = len(vehicles)
         if n == 0 or budget <= 0:
             return [], 0, 0
             
-        # dp[i][w] represents maximum impact with first i items and weight limit w
+        # Step 1: Initialize the 2D DP Table (matrix of size [N + 1] x [Budget + 1])
+        # dp[i][w] will store the maximum operational impact score achievable
+        # using the first 'i' vehicles with a budget limit of 'w' hours.
         dp = [[0] * (budget + 1) for _ in range(n + 1)]
         
+        # Step 2: Build the DP table bottom-up
         for i in range(1, n + 1):
-            cost = vehicles[i - 1]["Duration"]
-            value = vehicles[i - 1]["Impact"]
+            duration = vehicles[i - 1]["Duration"]  # Time cost of the task (weight)
+            impact = vehicles[i - 1]["Impact"]      # Operational importance score (value)
+            
             for w in range(budget + 1):
-                if cost <= w:
-                    dp[i][w] = max(dp[i - 1][w], dp[i - 1][w - cost] + value)
+                # If the vehicle's duration is within the current budget limit 'w'
+                if duration <= w:
+                    # We have two choices:
+                    # Choice A: Exclude the vehicle (keep previous max impact with same budget: dp[i-1][w])
+                    # Choice B: Include the vehicle (get its impact + max impact of remaining budget: dp[i-1][w - duration] + impact)
+                    # We pick the choice that yields the higher operational impact score.
+                    dp[i][w] = max(dp[i - 1][w], dp[i - 1][w - duration] + impact)
                 else:
+                    # If the vehicle's duration exceeds the current budget limit 'w', we cannot include it.
+                    # We must exclude it and carry forward the previous maximum.
                     dp[i][w] = dp[i - 1][w]
                     
-        # Trace back path to find the included vehicles
+        # Step 3: Backtrack through the DP table to determine which vehicles were selected
         selected_tasks = []
         w = budget
         duration_total = 0
+        
         for i in range(n, 0, -1):
+            # If the value in dp[i][w] is different from the row above dp[i-1][w],
+            # it means we decided to include the i-th vehicle to achieve that maximum impact score.
             if dp[i][w] != dp[i - 1][w]:
                 vehicle = vehicles[i - 1]
                 selected_tasks.append(vehicle)
-                duration_total += vehicle["Duration"]
-                w -= vehicle["Duration"]
+                duration_total += vehicle["Duration"]  # Accumulate the selected duration
+                w -= vehicle["Duration"]               # Reduce the remaining budget
                 
-        # Revert back to historical API order list
+        # Since we backtracked from the last item to the first, reverse the list
+        # to match the order in which they appear in the original list.
         selected_tasks.reverse()
         total_impact = dp[n][budget]
         
