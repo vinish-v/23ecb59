@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: logging_middleware
+Version: 1.0.0
+Summary: Reusable Remote Logging Middleware for Campus Evaluation Application
+Author: vinish v
+Requires-Dist: requests>=2.31.0
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: summary
